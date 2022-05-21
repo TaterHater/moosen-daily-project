@@ -12,32 +12,50 @@
 // Pursue Slider Prediction: https://editor.p5js.org/codingtrain/sketches/l7MgPpTUB
 
 class Vehicle {
-  constructor(x, y, spd = 2, c = color(255, 255, 255)) {
+  constructor({ x, y, spd, c, r }, { width, height }) {
     this.pos = createVector(x, y);
     this.vel = createVector(0, 0);
     this.acc = createVector(0, 0);
-    this.maxSpeed = spd;
+    this.maxSpeed = spd || 1;
     this.maxForce = 0.2;
-    this.perception = random(100,150);
-    this.r = 4;
+    this.perception = 150;
+    this.r = r || 6;
     this.vel = p5.Vector.random2D();
-    this.color = c;
+    this.color = c || color(255, 255, 255);
 
     this.wanderTheta = PI / 2;
   }
   updateColor(c) {
     this.color = c;
   }
-  updatePerception(p){
+  updateSize(r) {
+    this.r = r;
+  }
+  updatePerception(p) {
     this.perception = p;
   }
-  getDistToTarget(target){
-    let d = p5.Vector.dist(this.pos, target.pos);
-    return d;
+  getDistToTarget(target) {
+    const vector = this.getClosestVector(target);
+    return vector.distToTarget;
+  }
+
+  getClosestVector(target) {
+    const vectors = Array.from({ length: 9 }, (_, i) => {
+      const xdif = -width + (i % 3) * width;
+      const ydif = -height + Math.floor(i / 3) * height;
+      return createVector(target.pos?.x + xdif, target.pos?.y + ydif);
+    });
+    const withDist = vectors.map((v) => ({
+      ...v,
+      distToTarget: p5.Vector.dist(this.pos, v),
+    }));
+    withDist.sort((a, b) => a.distToTarget - b.distToTarget);
+    return withDist[0];
   }
 
   flee(target) {
-    return this.seek(target).mult(-1);
+    const diff = PI + random(-10, 10) * 0.1;
+    return this.seek(target).rotate(diff);
   }
 
   wander() {
@@ -76,7 +94,9 @@ class Vehicle {
   }
 
   seek(target, arrival = false) {
-    let force = p5.Vector.sub(target.pos, this.pos);
+    const closest = this.getClosestVector(target);
+    const newTarget = createVector(closest.x, closest.y);
+    let force = p5.Vector.sub(newTarget, this.pos);
 
     let desiredSpeed = this.maxSpeed;
     if (arrival) {
@@ -119,7 +139,7 @@ class Vehicle {
 
   show() {
     //stroke(1);
-   // strokeWeight(2);
+    // strokeWeight(2);
     let c = color(255, 204, 0);
 
     push();
@@ -132,14 +152,14 @@ class Vehicle {
 
   edges() {
     if (this.pos.x > width + this.r) {
-      this.pos.x = -this.r;
+      this.pos.x = 0;
     } else if (this.pos.x < -this.r) {
-      this.pos.x = width + this.r;
+      this.pos.x = width;
     }
     if (this.pos.y > height + this.r) {
-      this.pos.y = -this.r;
+      this.pos.y = 0;
     } else if (this.pos.y < -this.r) {
-      this.pos.y = height + this.r;
+      this.pos.y = height;
     }
   }
 }

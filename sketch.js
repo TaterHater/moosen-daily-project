@@ -16,19 +16,34 @@ let target;
 let currentTarget;
 
 function setup() {
-  createCanvas(800, 1000);
-  pursuer = new Vehicle(100, 100, 3, color(255, 0, 0));
-  pursuer.updatePerception(400);
+  const numTargets = 800;
+  const width = 800,
+    height = 800;
+  createCanvas(width, height);
+  pursuer = new Vehicle(
+    { x: 100, y: 100, spd: 1.1, c: color(255, 0, 0), r: 9 },
+    { width, height }
+  );
+  pursuer.updatePerception(width + height);
   vehicles = [];
 
-  for (var i = 0; i < 150; i++) {
-    vehicles.push(new Vehicle(random(0, width), random(0, height)));
+  for (var i = 0; i < numTargets; i++) {
+    vehicles.push(
+      new Vehicle(
+        {
+          x: random(0, width),
+          y: random(0, height),
+          c: color(random(192, 255), random(192, 255), random(192, 255)),
+        },
+        { width, height }
+      )
+    );
   }
   currentTarget = vehicles.length - 1;
 }
 
 function draw() {
-  background(20,70,100);
+  background(20, 70, 100);
   //fill(255, 0, 0);
   noStroke();
   target = vehicles[currentTarget];
@@ -57,12 +72,11 @@ function draw() {
     vehicles[i].show();
   }
   //just one vehicle
-  
-  if(pursuer.getDistToTarget(vehicles[currentTarget]) < pursuer.perception){
-      let steering = pursuer.pursue(vehicles[currentTarget]);
-  pursuer.applyForce(steering);
-  }
-  else{
+
+  if (pursuer.getDistToTarget(vehicles[currentTarget]) < pursuer.perception) {
+    let steering = pursuer.pursue(vehicles[currentTarget]);
+    pursuer.applyForce(steering);
+  } else {
     pursuer.wander();
   }
 

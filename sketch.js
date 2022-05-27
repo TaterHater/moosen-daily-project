@@ -14,14 +14,17 @@
 let pursuer;
 let currentTarget;
 let targets = [];
+let pellets = [];
 
 function setup() {
 	const numTargets = 800;
+	const numPellets = 2;
 	const width = 800;
 	const height = 800;
 
 	createCanvas(width, height);
 
+	// Add Pursuer
 	pursuer = new Boid(
 		{
 			x: 100,
@@ -34,6 +37,7 @@ function setup() {
 		{ width, height },
 	);
 
+	// Add targets
 	for (var i = 0; i < numTargets; i++) {
 		targets.push(
 			new Boid(
@@ -48,6 +52,11 @@ function setup() {
 		);
 	}
 	currentTarget = targets.length - 1;
+
+	// Add Pellets
+	for (var i = 0; i < numPellets; i++) {
+		addPellet();
+	}
 }
 
 function draw() {
@@ -55,11 +64,36 @@ function draw() {
 
 	// Targets
 	for (var i = 0; i < targets.length; i++) {
+		// Find closeset pellet
+		let closestPellet = pellets[0];
+		let closestPelletDist = targets[i].getDistToTarget(closestPellet);
+		for (var j = 0; j < pellets.length; j++) {
+			let distance = targets[i].getDistToTarget(pellets[j]);
+			if (distance < closestPelletDist) {
+				closestPellet = pellets[j];
+				closestPelletDist = distance;
+			}
+		}
+
+		// Eat pellet
+		if (closestPelletDist < closestPellet.r + targets[i].r) {
+			pellets.splice(pellets.indexOf(closestPellet), 1);
+			addPellet();
+		}
+
+		// Set current target color
 		if (i === currentTarget) {
 			targets[i].updateColor(color(0, 255, 0));
 		}
+
+		// Move
 		if (targets[i].getDistToTarget(pursuer) <= targets[i].perception) {
 			let arrSteer = targets[i].flee(pursuer);
+			targets[i].applyForce(arrSteer);
+		} else if (
+			targets[i].getDistToTarget(closestPellet) <= targets[i].perception
+		) {
+			let arrSteer = targets[i].pursue(closestPellet);
 			targets[i].applyForce(arrSteer);
 		} else {
 			targets[i].wander();
@@ -88,4 +122,20 @@ function draw() {
 	pursuer.edges(); // not in video added after the fact
 	pursuer.update();
 	pursuer.show();
+
+	// Pellets
+	for (var i = 0; i < pellets.length; i++) {
+		pellets[i].show();
+	}
+}
+
+function addPellet() {
+	pellets.push(
+		new Pellet({
+			x: random(0, width),
+			y: random(0, height),
+			color: color(255, 255, 0),
+			size: 6,
+		}),
+	);
 }

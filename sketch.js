@@ -12,75 +12,79 @@
 // Pursue Slider Prediction: https://editor.p5js.org/codingtrain/sketches/l7MgPpTUB
 
 let pursuer;
-let target;
 let currentTarget;
+let targets = [];
 
 function setup() {
   const numTargets = 800;
-  const width = 800,
-    height = 800;
+  const width = 800;
+  const height = 800;
+
   createCanvas(width, height);
-  pursuer = new Vehicle(
-    { x: 100, y: 100, spd: 1.1, c: color(255, 0, 0), r: 9 },
+
+  pursuer = new Boid(
+    {
+      x: 100,
+      y: 100,
+      maxSpeed: 1.1,
+      color: color(255, 0, 0),
+      size: 9,
+      perception: 300,
+    },
     { width, height }
   );
-  pursuer.updatePerception(width + height);
-  vehicles = [];
 
   for (var i = 0; i < numTargets; i++) {
-    vehicles.push(
-      new Vehicle(
+    targets.push(
+      new Boid(
         {
           x: random(0, width),
           y: random(0, height),
-          c: color(random(192, 255), random(192, 255), random(192, 255)),
+          color: color(random(192, 255), random(192, 255), random(192, 255)),
+          size: random(4, 6),
         },
         { width, height }
       )
     );
   }
-  currentTarget = vehicles.length - 1;
+  currentTarget = targets.length - 1;
 }
 
 function draw() {
   background(20, 70, 100);
-  //fill(255, 0, 0);
-  noStroke();
-  target = vehicles[currentTarget];
-  circle(target.x, target.y, 32);
 
-  //pursue
-  let d = pursuer.getDistToTarget(target);
-  if (d < pursuer.r + vehicles[currentTarget].r) {
-    vehicles.pop();
-    console.log(vehicles.length);
-    currentTarget--;
-  }
-
-  for (var i = 0; i < vehicles.length; i++) {
+  // Targets
+  for (var i = 0; i < targets.length; i++) {
     if (i === currentTarget) {
-      vehicles[i].updateColor(color(0, 255, 0));
+      targets[i].updateColor(color(0, 255, 0));
     }
-    if (vehicles[i].getDistToTarget(pursuer) <= vehicles[i].perception) {
-      let arrSteer = vehicles[i].flee(pursuer);
-      vehicles[i].applyForce(arrSteer);
+    if (targets[i].getDistToTarget(pursuer) <= targets[i].perception) {
+      let arrSteer = targets[i].flee(pursuer);
+      targets[i].applyForce(arrSteer);
     } else {
-      vehicles[i].wander();
+      targets[i].wander();
     }
-    vehicles[i].edges();
-    vehicles[i].update();
-    vehicles[i].show();
+    targets[i].edges();
+    targets[i].update();
+    targets[i].show();
   }
-  //just one vehicle
 
-  if (pursuer.getDistToTarget(vehicles[currentTarget]) < pursuer.perception) {
-    let steering = pursuer.pursue(vehicles[currentTarget]);
+  // Pursuer
+  let dist = pursuer.getDistToTarget(targets[currentTarget]);
+
+  if (dist < pursuer.perception) {
+    let steering = pursuer.pursue(targets[currentTarget]);
     pursuer.applyForce(steering);
   } else {
     pursuer.wander();
   }
 
-  // //
+  if (dist < pursuer.r + targets[currentTarget].r) {
+    targets.pop();
+    console.log(targets.length);
+    currentTarget--;
+  }
+
   pursuer.edges(); // not in video added after the fact
   pursuer.update();
   pursuer.show();

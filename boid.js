@@ -11,17 +11,17 @@
 // Pursue Wander: https://editor.p5js.org/codingtrain/sketches/EEnmY04lt
 // Pursue Slider Prediction: https://editor.p5js.org/codingtrain/sketches/l7MgPpTUB
 
-class Vehicle {
-  constructor({ x, y, spd, c, r }, { width, height }) {
+class Boid {
+  constructor({ x, y, maxSpeed, color, size, perception }, { width, height }) {
     this.pos = createVector(x, y);
     this.vel = createVector(0, 0);
     this.acc = createVector(0, 0);
-    this.maxSpeed = spd || 1;
+    this.maxSpeed = maxSpeed || 1;
     this.maxForce = 0.2;
-    this.perception = 150;
-    this.r = r || 6;
+    this.perception = perception || 150;
+    this.r = size || 6;
     this.vel = p5.Vector.random2D();
-    this.color = c || color(255, 255, 255);
+    this.color = color || color(255, 255, 255);
 
     this.wanderTheta = PI / 2;
   }
@@ -62,24 +62,14 @@ class Vehicle {
     let wanderPoint = this.vel.copy();
     wanderPoint.setMag(120);
     wanderPoint.add(this.pos);
-    fill(255, 0, 0);
-    // circle(wanderPoint.x,wanderPoint.y,16);
     let wanderRadius = 75;
-    // noFill();
-    // stroke(255);
-    // circle(wanderPoint.x,wanderPoint.y,wanderRadius*2);
-    // line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y);
 
     let theta = this.wanderTheta + this.vel.heading();
 
     let x = wanderRadius * cos(theta);
     let y = wanderRadius * sin(theta);
-    // fill(0,255,0);
-    noStroke();
+
     wanderPoint.add(x, y);
-    // circle(wanderPoint.x,wanderPoint.y,8);
-    // stroke(255);
-    //line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y);
 
     let steer = wanderPoint.sub(this.pos);
     steer.setMag(this.maxForce);
@@ -112,17 +102,14 @@ class Vehicle {
     force.limit(this.maxForce);
     return force;
   }
-  pursue(vehicle) {
-    // let target = vehicle.pos.copy();
-    //  target.add(vehicle.vel.copy().mult(10));
-
+  pursue(target) {
     fill(255, 0, 0);
     circle(target.x, target.y, 16);
 
     return this.seek(target);
   }
-  evade(vehicle) {
-    let pursuit = this.pursue(vehicle);
+  evade(target) {
+    let pursuit = this.pursue(target);
     return pursuit.mult(-1);
   }
 
@@ -138,11 +125,8 @@ class Vehicle {
   }
 
   show() {
-    //stroke(1);
-    // strokeWeight(2);
-    let c = color(255, 204, 0);
-
     push();
+    noStroke();
     fill(this.color);
     translate(this.pos.x, this.pos.y);
     rotate(this.vel.heading());
@@ -150,6 +134,7 @@ class Vehicle {
     pop();
   }
 
+  // Loops the boid to the other side
   edges() {
     if (this.pos.x > width + this.r) {
       this.pos.x = 0;
@@ -161,25 +146,5 @@ class Vehicle {
     } else if (this.pos.y < -this.r) {
       this.pos.y = height;
     }
-  }
-}
-
-class Target extends Vehicle {
-  constructor(x, y) {
-    super(x, y);
-    this.maxSpeed = 5;
-    this.vel = p5.Vector.random2D();
-    this.vel.mult(5);
-  }
-  show() {
-    stroke(255);
-    strokeWeight(2);
-    push();
-    fill(color(255, 200, 0));
-
-    translate(this.pos.x, this.pos.y);
-    rotate(this.vel.heading());
-    circle(0, 0, this.r * 2);
-    pop();
   }
 }
